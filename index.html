@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher's Colony - Plot Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #ddd8cc;
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: auto;
+  padding: 10px;
+}
+
+.page {
+  width: 860px;
+  margin: 0 auto;
+  background: #fff;
+  border: 7px solid #c0392b;
+  padding: 14px 14px 18px;
+}
+
+/* ── HEADER ── */
+.hdr { text-align: center; margin-bottom: 12px; position: relative; }
+.hdr .compass { position: absolute; left: 4px; top: 0; font-size: 1.8rem; }
+.badge {
+  display: inline-block;
+  background: #c0392b; color: #fff;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem; font-weight: 700;
+  padding: 4px 24px; border-radius: 5px;
+}
+.sub1 { font-size: 0.68rem; color: #c0392b; margin-top: 3px; }
+.sub2 { color: #1a3a6e; font-weight: 700; font-size: 0.88rem; margin-top: 6px; }
+.sub3 { color: #1a3a6e; font-size: 0.8rem; }
+
+/* ── OUTER LAYOUT: left-road | map | right-road ── */
+.outer {
+  display: table;
+  width: 100%;
+  border: 2px solid #444;
+  border-collapse: collapse;
+}
+.outer-row { display: table-row; }
+.road-col {
+  display: table-cell;
+  width: 26px;
+  background: #b0c4ce;
+  vertical-align: middle;
+  text-align: center;
+  border: 1px solid #555;
+}
+.road-col span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.14em; color: #1a237e;
+}
+.road-col.left span { transform: rotate(180deg); }
+
+.map-col {
+  display: table-cell;
+  vertical-align: top;
+  padding: 6px 5px;
+}
+
+/* ── ROAD STRIP ── */
+.road {
+  background: #b0c4ce;
+  text-align: center;
+  font-size: 0.6rem; font-weight: 700;
+  color: #1a237e; letter-spacing: 0.1em;
+  padding: 3px 0;
+  border-top: 1.5px solid #555;
+  border-bottom: 1.5px solid #555;
+  margin: 4px 0;
+}
+
+/* ── TWO COLUMN SECTION ── */
+.row2 {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6px 0;
+  margin-bottom: 2px;
+}
+.col2 { display: table-cell; width: 50%; vertical-align: top; }
+
+/* ── RANGE LABELS ── */
+.rl {
+  display: table;
+  width: 100%;
+  margin-bottom: 2px;
+}
+.rl-left, .rl-right {
+  display: table-cell;
+  font-size: 0.55rem; font-weight: 700; color: #333;
+  border: 1px solid #555; padding: 0 3px;
+  background: #fff; line-height: 1.5;
+  white-space: nowrap;
+}
+.rl-right { text-align: right; }
+.rl-spacer { display: table-cell; width: 100%; }
+
+/* ── PLOT TABLE ── */
+.ptable {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid #555;
+  table-layout: fixed;
+}
+.ptable td {
+  border: 1px solid #aaa;
+  text-align: center;
+  padding: 3px 1px;
+  cursor: pointer;
+  vertical-align: middle;
+  height: 40px;
+  width: auto;
+}
+.ptable tr { border-bottom: 1px solid #999; }
+.ptable td:hover { background: #fffbe6; }
+.ptable td.owned { background: #e8f5e9; }
+.ptable td.owned:hover { background: #c8e6c9; }
+
+.pn { font-size: 0.63rem; font-weight: 700; color: #1a3a6e; display: block; }
+.po { font-size: 0.38rem; color: #2e7d32; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── BOTTOM ROAD ── */
+.bot-road {
+  background: #b0c4ce; text-align: center;
+  font-weight: 700; font-size: 0.7rem;
+  color: #1a237e; letter-spacing: 0.12em;
+  padding: 5px 0; border-top: 2px solid #444; margin-top: 4px;
+}
+
+/* ── FOOTER ── */
+.ftr {
+  display: table; width: 100%;
+  margin-top: 10px; border-spacing: 0;
+}
+.ftr-left, .ftr-mid, .ftr-right { display: table-cell; vertical-align: top; }
+.ftr-left { font-size: 0.67rem; color: #1a3a6e; line-height: 1.75; }
+.ftr-mid { text-align: center; }
+.cell-box { display: inline-block; border: 1px solid #555; padding: 6px 16px; font-size: 0.72rem; color: #333; min-width: 130px; }
+.ftr-right { text-align: right; }
+.sr { display: inline-block; background: #b0c4ce; color: #1a237e; font-size: 0.57rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-bottom: 3px; }
+
+/* ── MODAL ── */
+.ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:999; align-items:center; justify-content:center; }
+.ov.open { display:flex; }
+.modal { background:#fff; border-radius:14px; padding:22px 20px 18px; width:300px; box-shadow:0 16px 50px rgba(0,0,0,0.35); position:relative; }
+.mcl { position:absolute; top:10px; right:12px; background:none; border:none; font-size:1.2rem; cursor:pointer; color:#888; }
+.mpl { font-family:'Playfair Display',serif; font-size:2rem; color:#c0392b; font-weight:700; }
+.mlb { font-size:0.65rem; color:#aaa; text-transform:uppercase; letter-spacing:0.07em; margin-top:10px; }
+.mvl { font-size:0.9rem; font-weight:600; color:#1a3a6e; margin-top:2px; }
+.mph { font-size:1rem; font-weight:700; color:#1565c0; margin-top:2px; }
+.mc1 { display:block; width:100%; margin-top:14px; background:#c0392b; color:#fff; border:none; border-radius:9px; padding:11px; font-size:0.95rem; font-weight:700; cursor:pointer; text-decoration:none; text-align:center; font-family:'DM Sans',sans-serif; }
+.mc2 { display:block; width:100%; margin-top:7px; background:#e8f5e9; color:#2e7d32; border:1.5px solid #81c784; border-radius:9px; padding:9px; font-size:0.85rem; font-weight:600; text-decoration:none; text-align:center; font-family:'DM Sans',sans-serif; }
+.mno { color:#e67e22; font-size:0.85rem; text-align:center; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="compass">🧭</div>
+    <div class="badge">Teacher'S Colony</div>
+    <div class="sub1">Near Bye-pass Road · Pedana Road Cross</div>
+    <div class="sub2">Proposed House sites in</div>
+    <div class="sub3">Rs. No. 311 / 1, 2, 3</div>
+  </div>
+
+  <!-- MAP -->
+  <div class="outer">
+    <div class="outer-row">
+      <div class="road-col left"><span>100 FEET PORT ROAD</span></div>
+      <div class="map-col">
+
+        <!-- SOUTH: 160-166 | 167-175 -->
+        <div class="row2">
+          <div class="col2">
+            <div class="rl"><span class="rl-left">160—166</span><span class="rl-spacer"></span><span class="rl-right">SOUTH</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r161"></tr>
+              <tr id="r160"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">160—155</span></div>
+          </div>
+          <div class="col2">
+            <div class="rl"><span class="rl-left">167—175</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r167"></tr>
+              <tr id="r154"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">154—146</span></div>
+          </div>
+        </div>
+
+        <div class="road">— 30 FEET ROAD —</div>
+
+        <!-- 130-136 | 137-145 -->
+        <div class="row2">
+          <div class="col2">
+            <div class="rl"><span class="rl-left">130—136</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r130"></tr>
+              <tr id="r129"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">129—123</span></div>
+          </div>
+          <div class="col2">
+            <div class="rl"><span class="rl-left">137—145</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r137"></tr>
+              <tr id="r122"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">122—114</span></div>
+          </div>
+        </div>
+
+        <div class="road">— 30 FEET ROAD —</div>
+
+        <!-- 98-104 | 105-113 -->
+        <div class="row2">
+          <div class="col2">
+            <div class="rl"><span class="rl-left">98—104</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r98"></tr>
+              <tr id="r97"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">97—91</span></div>
+          </div>
+          <div class="col2">
+            <div class="rl"><span class="rl-left">105—113</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r105"></tr>
+              <tr id="r90"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">90—82</span></div>
+          </div>
+        </div>
+
+        <div class="road">— 40 FEET ROAD —</div>
+
+        <!-- 65-72 | 73-81 -->
+        <div class="row2">
+          <div class="col2">
+            <div class="rl"><span class="rl-left">65—72</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r65"></tr>
+              <tr id="r64"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">64—57</span></div>
+          </div>
+          <div class="col2">
+            <div class="rl"><span class="rl-left">73—81</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r73"></tr>
+              <tr id="r56"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">56—48</span></div>
+          </div>
+        </div>
+
+        <div class="road">— 30 FEET ROAD —</div>
+
+        <!-- 33-39 | 40-47 -->
+        <div class="row2">
+          <div class="col2">
+            <div class="rl"><span class="rl-left">33—39</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r33"></tr>
+              <tr id="r32"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">32—26</span></div>
+          </div>
+          <div class="col2">
+            <div class="rl"><span class="rl-left">40—47</span></div>
+            <table class="ptable"><tbody>
+              <tr id="r40"></tr>
+              <tr id="r25"></tr>
+            </tbody></table>
+            <div style="text-align:right;margin-top:1px"><span class="rl-right" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">25—18</span></div>
+          </div>
+        </div>
+
+        <div class="road">— 30 FEET ROAD —</div>
+
+        <!-- 5-9 | 10-17 -->
+        <div class="row2">
+          <div class="col2">
+            <div class="rl"><span class="rl-left">9—5</span></div>
+            <table class="ptable"><tbody><tr id="r9"></tr></tbody></table>
+          </div>
+          <div class="col2">
+            <div class="rl"><span class="rl-left">10—17</span></div>
+            <table class="ptable"><tbody><tr id="r10"></tr></tbody></table>
+          </div>
+        </div>
+
+        <!-- 1-4 bottom right -->
+        <div style="text-align:right; margin-top:4px;">
+          <span class="rl-left" style="border:1px solid #555;padding:0 3px;font-size:0.55rem;font-weight:700">4—1</span>
+          <table class="ptable" style="width:180px; display:inline-table; margin-top:2px;">
+            <tbody><tr id="r1"></tr></tbody>
+          </table>
+        </div>
+
+      </div><!-- end map-col -->
+      <div class="road-col right"><span>Z.P. CENTRE (1 K.M.)</span></div>
+    </div>
+  </div>
+
+  <div class="bot-road">100 FEET PORT ROAD</div>
+
+  <!-- FOOTER -->
+  <div class="ftr">
+    <div class="ftr-left">
+      <strong>Office : Rajyalakshmi Nilayam,</strong><br>
+      Near Bye-pass Road - Pedana Road Cross<br>
+      <strong>MACHILIPATNAM.</strong> Cell : 9848 326 333<br>
+      e-mail : nagaraju123123@gmail.com
+    </div>
+    <div class="ftr-mid"><div class="cell-box">Cell :</div></div>
+    <div class="ftr-right">
+      <div><span class="sr">OUTER RING ROAD</span></div>
+      <div><span class="sr">BYPASS</span></div>
+      <div><span class="sr">PADANA</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="ov" id="ov">
+  <div class="modal">
+    <button class="mcl" onclick="closeModal()">✕</button>
+    <div class="mpl" id="m-num"></div>
+    <div class="mlb">Owner</div>
+    <div class="mvl" id="m-owner"></div>
+    <div id="m-contact">
+      <div class="mlb" style="margin-top:8px">Phone</div>
+      <div class="mph" id="m-phone"></div>
+      <a class="mc1" id="m-c1" href="#">📞 Call</a>
+      <a class="mc2" id="m-c2" href="#" style="display:none">📞 Call Alt. Owner</a>
+    </div>
+    <div class="mno" id="m-none" style="display:none">No contact info available</div>
+  </div>
+</div>
+
+<script>
+const O={
+  16:[{n:"L. Subramanyam",p:"+918499899833"}],
+  17:[{n:"Jogi Kanakadurga",p:"+919963729133"}],
+  25:[{n:"K. Nagambicamani",p:"+919949726566"}],
+  27:[{n:"M. Sekhar",p:"+919866172123"}],
+  29:[{n:"MD. Basheer",p:"+919491584669"}],
+  30:[{n:"Kalilullah",p:"+919000548786"}],
+  31:[{n:"Gose",p:"+919154078692"}],
+  32:[{n:"MD. Basheer/Kalilullah/Gose",p:"+919491584669"}],
+  33:[{n:"MD. Basheer/Kalilullah/Gose",p:"+919491584669"}],
+  34:[{n:"MD. Basheer/Kalilullah/Gose",p:"+919491584669"}],
+  35:[{n:"MD. Basheer/Kalilullah/Gose",p:"+919491584669"}],
+  36:[{n:"MD. Basheer/Kalilullah/Gose",p:"+919491584669"}],
+  37:[{n:"V. Sivaji",p:"+919949413409"}],
+  40:[{n:"B. Radhakumari",p:"+919491380096"},{n:"M. Somaraju",p:"+919908636250"}],
+  52:[{n:"P. Anjaneya Das",p:"+919848794767"}],
+  65:[{n:"B. Padmavathi Devi",p:"+918074937593"}],
+  73:[{n:"P. Rakesh",p:"+918919112471"}],
+  75:[{n:"Gangaraju",p:"+919393049750"}],
+  78:[{n:"Sambasivarao",p:"+919492482163"}],
+  95:[{n:"Abdul Wajid",p:"+917893774846"}],
+  102:[{n:"MD. Kareemullah",p:"+919291752412"}],
+  106:[{n:"G. Kondababu",p:"+919989120209"}],
+  109:[{n:"Pulagani Ramadevi",p:"+919393652827"}],
+  110:[{n:"M. Nalani Kumari",p:"+919393911464"},{n:"Pulagani Ramadevi",p:"+919393652827"}],
+  111:[{n:"M. Nalani Kumari",p:"+919393911464"}],
+  113:[{n:"Collector Office Madam",p:"+919154769111"}],
+  114:[{n:"VV. Nagabushan",p:"+918897972298"}],
+  116:[{n:"V. Anitha",p:"+918374924161"}],
+  121:[{n:"Sudhakar",p:"+919247402890"}],
+  123:[{n:"MD. Abdullah",p:"+917569958038"}],
+  124:[{n:"S. Nagaraju",p:"+919866341198"}],
+  125:[{n:"L.V.N. Sastry",p:"+919989347789"}],
+  127:[{n:"V. Vasu",p:"+919550529929"}],
+  130:[{n:"CH. Rambabu",p:"+916302122508"}],
+  132:[{n:"CH. Nageswara Rao",p:"+919849309522"}],
+  133:[{n:"VV. Nagabushan",p:"+918897972298"}],
+  137:[{n:"M. Ramana",p:"+919866172123"},{n:"M. Bhagya Lakshmi",p:"+919866172123"}],
+  151:[{n:"P. Kalpana Devi",p:"+917036515490"}],
+  152:[{n:"Tata Mounika",p:"+917904349625"}],
+  216:[{n:"Marakani Vasu",p:"+919347222233"}],
+  224:[{n:"V. Vijay Kumar",p:"+919247330326"}],
+  225:[{n:"L. Ramakrishna",p:"+919440540395"}],
+};
+
+function fmt(p){const d=p.replace(/\D/g,'');return d.length===12&&d.startsWith('91')?`+91 ${d.slice(2,7)} ${d.slice(7)}`:p;}
+
+function makeTd(n){
+  const o=O[n];
+  const td=document.createElement('td');
+  if(o) td.className='owned';
+  td.innerHTML=`<span class="pn">${n}</span>`+(o?`<span class="po">${o[0].n.split(' ').pop()}</span>`:'');
+  td.onclick=()=>show(n);
+  return td;
+}
+
+function fill(id,nums){
+  const el=document.getElementById(id);
+  if(!el) return;
+  nums.forEach(n=>el.appendChild(makeTd(n)));
+}
+
+fill('r161',[161,162,163,164,165,166]);
+fill('r160',[160,159,158,157,156,155]);
+fill('r167',[167,168,169,170,171,172,173,174,175]);
+fill('r154',[154,153,152,151,150,149,148,147,146]);
+fill('r130',[130,131,132,133,134,135,136]);
+fill('r129',[129,128,127,126,125,124,123]);
+fill('r137',[137,138,139,140,141,142,143,144,145]);
+fill('r122',[122,121,120,119,118,117,116,115,114]);
+fill('r98', [98,99,100,101,102,103,104]);
+fill('r97', [97,96,95,94,93,92,91]);
+fill('r105',[105,106,107,108,109,110,111,112,113]);
+fill('r90', [90,89,88,87,86,85,84,83,82]);
+fill('r65', [65,66,67,68,69,70,71,72]);
+fill('r64', [64,63,62,61,60,59,58,57]);
+fill('r73', [73,74,75,76,77,78,79,80,81]);
+fill('r56', [56,55,54,53,52,51,50,49,48]);
+fill('r33', [33,34,35,36,37,38,39]);
+fill('r32', [32,31,30,29,28,27,26]);
+fill('r40', [40,41,42,43,44,45,46,47]);
+fill('r25', [25,24,23,22,21,20,19,18]);
+fill('r9',  [9,8,7,6,5]);
+fill('r10', [10,11,12,13,14,15,16,17]);
+fill('r1',  [4,3,2,1]);
+
+function show(n){
+  const o=O[n];
+  document.getElementById('m-num').textContent='Plot '+n;
+  if(o){
+    document.getElementById('m-owner').textContent=o.map(x=>x.n).join(' / ');
+    document.getElementById('m-phone').textContent=fmt(o[0].p);
+    document.getElementById('m-c1').href='tel:'+o[0].p;
+    const c2=document.getElementById('m-c2');
+    if(o[1]&&o[1].p!==o[0].p){c2.href='tel:'+o[1].p;c2.style.display='block';}
+    else c2.style.display='none';
+    document.getElementById('m-contact').style.display='';
+    document.getElementById('m-none').style.display='none';
+  } else {
+    document.getElementById('m-owner').textContent='—';
+    document.getElementById('m-contact').style.display='none';
+    document.getElementById('m-none').style.display='block';
+  }
+  document.getElementById('ov').classList.add('open');
+}
+function closeModal(){document.getElementById('ov').classList.remove('open');}
+document.getElementById('ov').addEventListener('click',function(e){if(e.target===this)closeModal();});
+</script>
+</body>
+</html>
